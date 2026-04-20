@@ -26,6 +26,8 @@ cp kernel/include/linux/mountzero_v4_vfs.h "$KERNEL_SRC/include/linux/"
 echo "[2/5] Copying source files..."
 cp kernel/fs/mountzero_v4_core.c "$KERNEL_SRC/fs/"
 cp kernel/fs/mountzero_v4_vfs.c "$KERNEL_SRC/fs/"
+cp kernel/fs/mountzero_v4_hooks.c "$KERNEL_SRC/fs/"
+cp kernel/fs/mountzero_v4_cli.c "$KERNEL_SRC/fs/"
 
 # Update Makefile
 echo "[3/5] Updating fs/Makefile..."

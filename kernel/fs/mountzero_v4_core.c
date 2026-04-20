@@ -58,6 +58,10 @@ atomic_t mz4_avc_count = ATOMIC_INIT(0);
 
 static DECLARE_BITMAP(mz4_bloom, MZ4_BLOOM_BITS);
 static bool mz4_hide_all_mounts = false;
+static bool mz4_mount_id_remap = false;
+static DEFINE_RWLOCK(mz4_mount_id_lock);
+static unsigned long mz4_mount_id_map[MZ4_MAX_HIDE_MOUNTS];
+static int mz4_mount_id_count = 0;
 
 static char mz4_stock_release[__NEW_UTS_LEN + 1] = {0};
 static char mz4_stock_version[__NEW_UTS_LEN + 1] = {0};
@@ -495,6 +499,65 @@ int mz4_clear_hide_mounts(void)
     return 0;
 }
 EXPORT_SYMBOL(mz4_clear_hide_mounts);
+
+int mz4_set_mount_id_remap(bool enable)
+{
+    write_lock_irq(&mz4_mount_id_lock);
+    if (!enable) {
+        memset(mz4_mount_id_map, 0, sizeof(mz4_mount_id_map));
+        mz4_mount_id_count = 0;
+    }
+    mz4_mount_id_remap = enable;
+    write_unlock_irq(&mz4_mount_id_lock);
+    pr_info("MZ4: Mount ID remap: %s\n", enable ? "enabled" : "disabled");
+    return 0;
+}
+EXPORT_SYMBOL(mz4_set_mount_id_remap);
+
+bool mz4_get_mount_id_remap(void)
+{
+    return mz4_mount_id_remap;
+}
+EXPORT_SYMBOL(mz4_get_mount_id_remap);
+
+int mz4_remap_mount_id(unsigned int old_id)
+{
+    unsigned long flags;
+    int new_id = (int)old_id;
+    int i;
+
+    if (!mz4_mount_id_remap)
+        return new_id;
+
+    read_lock_irqsave(&mz4_mount_id_lock, flags);
+    for (i = 0; i < mz4_mount_id_count && i < MZ4_MAX_HIDE_MOUNTS; i++) {
+        if (mz4_mount_id_map[i] == old_id) {
+            new_id = i + 1;
+            break;
+        }
+    }
+    read_unlock_irqrestore(&mz4_mount_id_lock, flags);
+
+    return new_id;
+}
+EXPORT_SYMBOL(mz4_remap_mount_id);
+
+int mz4_add_mount_id_mapping(unsigned int mount_id)
+{
+    unsigned long flags;
+
+    if (!mz4_mount_id_remap)
+        return 0;
+
+    write_lock_irqsave(&mz4_mount_id_lock, flags);
+    if (mz4_mount_id_count < MZ4_MAX_HIDE_MOUNTS) {
+        mz4_mount_id_map[mz4_mount_id_count++] = mount_id;
+    }
+    write_unlock_irqrestore(&mz4_mount_id_lock, flags);
+
+    return 0;
+}
+EXPORT_SYMBOL(mz4_add_mount_id_mapping);
 
 int mz4_add_hide_map(const char *path)
 {

@@ -1,0 +1,5 @@
+config MOUNTZERO_V4
+	bool "MountZero v4 - VFS hiding without SUSFS"
+	depends on KPROBES
+	help
+	  VFS hiding without SUSFS dependency.

@@ -1,0 +1,7 @@
+id=mountzero_v4
+name=MountZero v4
+version=v4.0.0
+versionCode=400
+author=爪卂丂ㄒ乇尺爪工刀ᗪ丂
+description=MountZero v4 path redirection manager with hot-plug module support. Built-in for KernelSU/ReSukiSU.
+metamodule=1
